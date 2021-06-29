@@ -19,12 +19,13 @@ type Client struct {
 	username   string
 	password   string
 	httpClient *http.Client
+	useBetaApi bool
 }
 
 // NewClient returns a new client
 // with the given credential
 // for the given testrail domain
-func NewClient(url, username, password string) (c *Client) {
+func NewClient(url, username, password string, useBetaApi ...bool) (c *Client) {
 	c = &Client{}
 	c.username = username
 	c.password = password
@@ -36,6 +37,10 @@ func NewClient(url, username, password string) (c *Client) {
 	c.url += "index.php?/api/v2/"
 
 	c.httpClient = &http.Client{}
+
+	if len(useBetaApi) > 0 {
+		c.useBetaApi = useBetaApi[0]
+	}
 
 	return
 }
@@ -62,6 +67,10 @@ func (c *Client) sendRequest(method, uri string, data, v interface{}) error {
 	req.SetBasicAuth(c.username, c.password)
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("Content-Type", "application/json")
+
+	if c.useBetaApi {
+		req.Header.Add("x-api-ident", "beta")
+	}
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
