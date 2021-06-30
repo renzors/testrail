@@ -2,7 +2,6 @@ package testrail
 
 import (
 	"strconv"
-	"strings"
 )
 
 // Milestone represents a Milestone
@@ -25,19 +24,6 @@ type SendableMilestone struct {
 	DueOn       int    `json:"due_on,omitempty"`
 }
 
-type ResponseWraper struct {
-	Offset int         `json:"offset"`
-	Limit  int         `json:"limit"`
-	Size   int         `json:"size"`
-	Links  Links       `json:"_links"`
-	Items  []Milestone `json:"milestones"`
-}
-
-type Links struct {
-	Next string `json:"next"`
-	Prev string `json:"prev"`
-}
-
 // GetMilestone returns the existing milestone milestoneID
 func (c *Client) GetMilestone(milestoneID int) (Milestone, error) {
 	returnMilestone := Milestone{}
@@ -51,24 +37,12 @@ func (c *Client) GetMilestones(projectID int, isCompleted ...bool) ([]Milestone,
 	uri := "get_milestones/" + strconv.Itoa(projectID)
 	if len(isCompleted) > 0 {
 		uri = uri + "&is_completed=" + btoitos(isCompleted[0])
-		uri = uri + "&limit=100" //TODO: remove after testing
 	}
 	var err error
 	returnMilestones := []Milestone{}
 
 	if c.useBetaApi {
-		wrapperIterator := ResponseWraper{}
-
-		err = c.sendRequest("GET", uri, nil, &wrapperIterator)
-		returnMilestones = append(returnMilestones, wrapperIterator.Items...)
-
-		for err == nil && wrapperIterator.Links.Next != "" && len(wrapperIterator.Items) == 100 { //TODO: change 100 to 250 after testing
-			nextUri := strings.TrimPrefix(wrapperIterator.Links.Next, "/api/v2/")
-			err = c.sendRequest("GET", nextUri, nil, &wrapperIterator)
-			if err == nil {
-				returnMilestones = append(returnMilestones, wrapperIterator.Items...)
-			}
-		}
+		err = c.sendRequestBeta("GET", uri, nil, &returnMilestones, "milestones")
 	} else {
 		err = c.sendRequest("GET", uri, nil, &returnMilestones)
 	}
