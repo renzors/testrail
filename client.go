@@ -118,7 +118,7 @@ func (c *Client) sendRequestBeta(method, uri string, data, v interface{}, itemsK
 
 	returnItems = tempItems
 
-	for err == nil && links.Next != "" && len(tempItems) == 250 { //TODO: change 100 to 250 after testing
+	for err == nil && links.Next != "" && len(tempItems) == 250 {
 		nextUri := strings.TrimPrefix(links.Next, "/api/v2/")
 		err = c.sendRequest("GET", nextUri, nil, &wraperMap)
 		if err == nil {
